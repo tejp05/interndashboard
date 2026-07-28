@@ -1,0 +1,25 @@
+{
+  "name": "intern-dashboard",
+  "version": "2.0.0",
+  "private": true,
+  "description": "IBM Intern Productivity Dashboard — multi-user server edition",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "node scripts/dev-server.js",
+    "dev:vercel": "vercel dev --listen 3000",
+    "migrate": "node scripts/migrate.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.4",
+    "bcryptjs": "^2.4.3",
+    "jose": "^5.9.6"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.4",
+    "vercel": "^39.2.2"
+  }
+}

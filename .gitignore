@@ -1,0 +1,29 @@
+# Data files - keep real EPM data out of version control
+data/*.csv
+data/*.xlsx
+data/*.xls
+data/*.xlsm
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Node / Vercel
+node_modules/
+.vercel/
+.env
+.env.local
+.env*.local
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+.devdata/
