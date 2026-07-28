@@ -32,10 +32,6 @@ The Directory shows:
 | **Team coverage** | Which parts of IBM the cohort has reached, and where the gaps are |
 | **Add to my network** | One click copies a person onto your own radar |
 
-**Ask Bob** — an assistant backed by IBM watsonx.ai. It reads a summary of your
-own dashboard and answers questions about it. It is read-only and never
-modifies your data.
-
 ### What stays private
 
 Contact **notes** are personal impressions and are never exposed by the
@@ -89,10 +85,6 @@ request, so there is no migration step to run.
 | `ALLOWED_EMAIL_DOMAINS` | — | e.g. `ibm.com` — restricts who can sign up |
 | `SIGNUP_INVITE_CODE` | — | Shared code required at signup |
 | `COHORT_NAME` | — | Label shown on the Directory, e.g. `Summer 2026 Interns` |
-| `WATSONX_API_KEY` | — | Enables Ask Bob |
-| `WATSONX_PROJECT_ID` | — | watsonx.ai project |
-| `WATSONX_URL` | — | Default `https://us-south.ml.cloud.ibm.com` |
-| `MODEL_NAME` | — | Default `ibm/granite-3-8b-instruct` |
 
 Generate `AUTH_SECRET`:
 
@@ -134,7 +126,6 @@ api/                    Vercel serverless functions
   auth/[action].js      signup · login · logout · me · profile · password
   data/[section].js     private sections + the contacts table
   directory.js          the cross-user aggregation
-  ask.js                IBM IAM token exchange + watsonx.ai generation
 
 scripts/
   dev-server.js         local server running the real handlers on PGlite
@@ -220,9 +211,8 @@ These predate v2 and are no longer part of the deployed app:
 - `app.py`, `agent.py`, `config.yaml`, `_test_profiler.py` — the original
   Streamlit CSV-dashboard tool. Still runnable with `streamlit run app.py`.
 - `intern-dashboard/` — the Python CUGA server and an older copy of the
-  frontend. Superseded by `api/ask.js`, which calls watsonx.ai directly over
-  HTTP and runs on Vercel; the CUGA agent needed a local Python venv and could
-  not be deployed.
+  frontend. The AI assistant was removed entirely; the dashboard has no LLM
+  dependency and needs no model credentials.
 
 ---
 

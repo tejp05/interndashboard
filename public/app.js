@@ -436,6 +436,9 @@ function initApp() {
   }
 
   renderAll();
+  // Pull the shared directory so the Overview's cohort snapshot has data.
+  // Cached for 60s, so opening the Directory tab afterwards costs nothing.
+  Directory.load();
 }
 
 function updateWeekBar(start, end) {
@@ -2470,67 +2473,6 @@ document.getElementById('import-file').addEventListener('change', function(e) {
     showAuthPanel('auth-login');
     showAuthError('login-error', err.message);
   }
-})();
-
-// ─────────────────────────────────────
-// ASK BOB — watsonx.ai assistant
-// ─────────────────────────────────────
-(function bobChat() {
-  const log   = document.getElementById('cuga-log');
-  const input = document.getElementById('cuga-q');
-  const send  = document.getElementById('cuga-send');
-  if (!log || !input || !send) return;
-
-  function gatherData() {
-    return {
-      profile:     S.get('ibm_template_profile',     {}),
-      activities:  S.get('ibm_template_activities',  []),
-      goals:       S.get('ibm_template_goals',       []),
-      projects:    S.get('ibm_template_projects',    []),
-      learning:    S.get('ibm_template_learning',    []),
-      networking:  S.get('ibm_template_network',     []),
-      reflections: S.get('ibm_template_reflections', []),
-      tasks:       S.get('ibm_template_tasks',       [])
-    };
-  }
-
-  function addMsg(role, text) {
-    const div = document.createElement('div');
-    div.className = 'cuga-msg ' + role;
-    div.textContent = text;
-    log.appendChild(div);
-    log.classList.add('show');
-    log.scrollTop = log.scrollHeight;
-    return div;
-  }
-
-  async function ask(question) {
-    if (!question.trim()) return;
-    addMsg('user', question);
-    input.value = '';
-    send.disabled = true;
-    const thinking = addMsg('agent thinking', 'Bob is thinking…');
-    try {
-      const res = await fetch('/api/ask', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({ question, data: gatherData() })
-      });
-      const body = await res.json();
-      thinking.textContent = body.answer || body.error || 'No response.';
-    } catch (e) {
-      thinking.textContent =
-        'Could not reach the assistant. Check your connection and try again.';
-    }
-    thinking.classList.remove('thinking');
-    send.disabled = false;
-  }
-
-  send.addEventListener('click', () => ask(input.value));
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') ask(input.value); });
-  document.querySelectorAll('.cuga-suggest').forEach(btn =>
-    btn.addEventListener('click', () => ask(btn.textContent)));
 })();
 
 // ─────────────────────────────────────

@@ -22,14 +22,6 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
 const PUBLIC = path.join(ROOT, 'public');
 
-// Pick up WATSONX_* and friends from .env if one exists, so Ask Bob works
-// locally. Absent or malformed .env is fine — those features just stay off.
-try {
-  process.loadEnvFile(path.join(ROOT, '.env'));
-} catch {
-  /* no .env — carry on */
-}
-
 const argPort = process.argv.indexOf('--port');
 const PORT = argPort !== -1 ? Number(process.argv[argPort + 1]) : Number(process.env.PORT) || 3000;
 
@@ -50,8 +42,7 @@ const MIME = {
 const ROUTES = [
   { re: /^\/api\/auth\/([\w-]+)$/, mod: 'api/auth/[action].js', keys: ['action'] },
   { re: /^\/api\/data\/([\w-]+)$/, mod: 'api/data/[section].js', keys: ['section'] },
-  { re: /^\/api\/directory$/, mod: 'api/directory.js', keys: [] },
-  { re: /^\/api\/ask$/, mod: 'api/ask.js', keys: [] }
+  { re: /^\/api\/directory$/, mod: 'api/directory.js', keys: [] }
 ];
 
 const handlerCache = new Map();

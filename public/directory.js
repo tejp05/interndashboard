@@ -75,6 +75,7 @@
     renderResults();
     renderInterns();
     renderTeams();
+    renderCohortSnapshot();
     const sub = document.getElementById('dir-sub');
     if (sub) {
       sub.textContent =
@@ -298,6 +299,64 @@
         );
       })
       .join('');
+  }
+
+  /**
+   * Compact cohort summary on the Overview tab: how far the cohort's combined
+   * network reaches, and the people worth asking for an introduction to.
+   */
+  function renderCohortSnapshot() {
+    const el = document.getElementById('dash-cohort');
+    if (!el || !data) return;
+
+    const mine = myContactKeys();
+    // Best leads: people others have actually met that I have not logged.
+    const leads = data.contacts
+      .filter(function (c) { return !mine.has(c.key) && c.connectedCount > 0; })
+      .slice(0, 5);
+
+    const s = data.stats;
+    const statsHTML =
+      '<div class="cn-stats">' +
+        '<div class="cn-stat"><b>' + s.interns + '</b><span>interns</span></div>' +
+        '<div class="cn-stat"><b>' + s.uniquePeople + '</b><span>people reached</span></div>' +
+        '<div class="cn-stat"><b>' + s.totalConnections + '</b><span>connections</span></div>' +
+        '<div class="cn-stat"><b>' + s.teamsCovered + '</b><span>teams</span></div>' +
+      '</div>';
+
+    const leadsHTML = leads.length
+      ? '<div class="cn-leads-lbl">People your cohort knows that you haven\'t met</div>' +
+        leads.map(function (c) {
+          const who = c.knownBy
+            .filter(function (k) { return k.status === 'connected'; })
+            .map(function (k) { return k.userName; });
+          return (
+            '<div class="cn-lead">' +
+              '<div class="dir-avatar sm">' + esc(initials(c.name)) + '</div>' +
+              '<div class="cn-lead-body">' +
+                '<div class="cn-lead-name">' + esc(c.name) + '</div>' +
+                '<div class="cn-lead-meta">' +
+                  esc([c.role, c.team].filter(Boolean).join(' · ') || 'No team recorded') +
+                '</div>' +
+              '</div>' +
+              '<div class="cn-lead-via">via ' + esc(who.slice(0, 2).join(', ')) +
+                (who.length > 2 ? ' +' + (who.length - 2) : '') + '</div>' +
+            '</div>'
+          );
+        }).join('')
+      : '<div class="cn-lead-empty">You have logged everyone your cohort has connected with. Nice.</div>';
+
+    el.innerHTML =
+      statsHTML + leadsHTML +
+      '<button class="btn bp cn-open" data-tab-link="8" style="margin-top:12px">Open the full Directory &rarr;</button>';
+
+    const open = el.querySelector('.cn-open');
+    if (open) {
+      open.addEventListener('click', function () {
+        if (typeof activateTab === 'function') activateTab('8');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
   }
 
   // ── Wiring ────────────────────────────────────────────────────────────────
