@@ -9,11 +9,55 @@
 
 import { neon } from '@neondatabase/serverless';
 
-if (!process.env.DATABASE_URL && !globalThis.__DB__) {
-  console.error('DATABASE_URL is not set — add a Neon store to the project.');
+/**
+ * Connection string env vars, in priority order.
+ *
+ * Which one exists depends on how the database was attached: the Neon
+ * integration sets DATABASE_URL, while Vercel Postgres sets POSTGRES_URL.
+ * Accept both rather than making the deploy depend on getting the name right.
+ * Pooled URLs come first — serverless functions open many short connections.
+ */
+const URL_VARS = [
+  'DATABASE_URL',
+  'POSTGRES_URL',
+  'DATABASE_URL_UNPOOLED',
+  'POSTGRES_URL_NON_POOLING',
+  'POSTGRES_PRISMA_URL'
+];
+
+/** True when a database connection string is configured. */
+export function hasConnection() {
+  return connectionString() !== null;
 }
 
-const neonClient = process.env.DATABASE_URL ? neon(process.env.DATABASE_URL) : null;
+function connectionString() {
+  for (const name of URL_VARS) {
+    const v = process.env[name];
+    if (v && v.trim()) return v.trim();
+  }
+  return null;
+}
+
+// Built lazily rather than at module load: env vars are present by the time a
+// request runs, and a cold start that raced initialization used to leave this
+// permanently null, surfacing as "(...) is not a function" on every call.
+let neonClient = null;
+
+function client() {
+  if (globalThis.__DB__) return globalThis.__DB__;
+  if (!neonClient) {
+    const url = connectionString();
+    if (!url) {
+      throw new Error(
+        'No database connection string found. Set DATABASE_URL (or POSTGRES_URL) ' +
+          'in the Vercel project environment variables — Storage → Create Database ' +
+          '→ Neon → Connect to Project sets it automatically — then redeploy.'
+      );
+    }
+    neonClient = neon(url);
+  }
+  return neonClient;
+}
 
 /**
  * Tagged-template SQL client.
@@ -23,8 +67,8 @@ const neonClient = process.env.DATABASE_URL ? neon(process.env.DATABASE_URL) : n
  * (PGlite) instead of a network database. In production `__DB__` is never set
  * and this is a thin pass-through to the Neon driver.
  */
-export const sql = (...args) => (globalThis.__DB__ || neonClient)(...args);
-sql.transaction = (...args) => (globalThis.__DB__ || neonClient).transaction(...args);
+export const sql = (...args) => client()(...args);
+sql.transaction = (...args) => client().transaction(...args);
 
 /** Private per-user sections, stored as JSON documents. */
 export const SECTION_NAMES = [
@@ -111,10 +155,12 @@ let migration = null;
  * instead of assuming the previous one's tables are still there.
  */
 export function ensureSchema() {
-  const client = globalThis.__DB__ || neonClient;
-  if (!migration || migration.client !== client) {
+  // client() resolves (and caches) the driver, so the key is stable across
+  // requests; it throws a readable error when no connection string is set.
+  const active = client();
+  if (!migration || migration.client !== active) {
     migration = {
-      client,
+      client: active,
       promise: (async () => {
         for (const stmt of DDL) await sql(stmt);
       })().catch((err) => {

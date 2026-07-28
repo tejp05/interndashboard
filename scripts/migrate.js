@@ -7,10 +7,10 @@
  * only needed if you want to provision the tables ahead of the first deploy.
  */
 
-import { ensureSchema, sql } from '../api/_lib/db.js';
+import { ensureSchema, sql, hasConnection } from '../api/_lib/db.js';
 
-if (!process.env.DATABASE_URL) {
-  console.error('DATABASE_URL is not set. Export it and try again.');
+if (!hasConnection()) {
+  console.error('No connection string found. Set DATABASE_URL or POSTGRES_URL and try again.');
   process.exit(1);
 }
 
